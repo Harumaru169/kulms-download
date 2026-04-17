@@ -12,6 +12,8 @@ kulms-download can be installed using pip
 $ pip install kulms-download
 ```
 
+kulms-download requires python>=3.12
+
 # Usage
 
 ```pycon
