@@ -1,6 +1,8 @@
 kulms-download is a CLI tool for downloading site resources from KULMS (Kyoto University Learning Management System). It uses asynchronous processing to quickly handle network and file I/O tasks.
+This project is under active development and is not yet stable.
 
 kulms-downloadはKULMS(京大学習管理システム)のサイトリソースをダウンロードするためのCLIツールです。非同期処理によってネットワークやファイルのIOタスクを高速に処理します。
+これは現在開発中のプロジェクトであり、安定版ではありません。
 
 ---
 
