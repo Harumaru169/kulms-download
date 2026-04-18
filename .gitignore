@@ -1,0 +1,21 @@
+.DS_Store
+.git/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Build and Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual Environments
+.venv/
+
+# Editors
+.vscode/
+
+# Local files
+piplist.txt
