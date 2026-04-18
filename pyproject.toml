@@ -23,6 +23,6 @@ keywords = ["kyoto", "ku", "download", "kulms"]
 kulms-download = "kulms_download.main:main"
 
 [project.urls]
-Repository = "https://github.com/" # TODO: ここをちゃんと書く
+Repository = "https://github.com/Harumaru169/kulms-download"
 
 [tool.setuptools_scm]
