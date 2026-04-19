@@ -16,10 +16,22 @@ from ..cookie.local_cookie_manager import LocalCookieManager
 from ..cookie.cookie_fetcher import CookieFetcher
 from ..metadatafetch.metadata_fetcher import MetadataFetcher
 from ..download.resource_downloader import ResourceDownloader
+from ..shared.exceptions import *
 
 def main():
     kulms_download_cli = KulmsDownloadCli()
-    asyncio.run(kulms_download_cli.main())
+    try:
+        asyncio.run(kulms_download_cli.main())
+    except KeyboardInterrupt:
+        print("中断しました")
+    except KulmsDownloadError as e:
+        kulms_download_cli.console.print(
+            f"エラー: {kulms_download_cli._user_message_for_error(e)}"
+        )
+    except Exception:
+        kulms_download_cli.console.print(
+            "予期しないエラーが発生しました"
+        )
 
 
 class KulmsDownloadCli:
@@ -56,6 +68,23 @@ class KulmsDownloadCli:
         ]
         cli_func = await questionary.select("=== KULMS Download ===", choices=choices).ask_async()
         await cli_func()
+
+    def _user_message_for_error(self, error: KulmsDownloadError) -> str:
+        if isinstance(error, AuthError):
+            return f"認証に失敗しました: {error}"
+        if isinstance(error, NetworkError):
+            return f"ネットワークエラーが発生しました: {error}"
+        if isinstance(error, FileSystemError):
+            return f"ファイル操作に失敗しました: {error}"
+        if isinstance(error, SettingError):
+            return f"設定エラーが発生しました: {error}"
+        if isinstance(error, ResourceError):
+            return f"リソース処理に失敗しました: {error}"
+        if isinstance(error, PasswordAppError):
+            return f"パスワードアプリの起動に失敗しました: {error}"
+        if isinstance(error, CredentialError):
+            return f"ECS-IDのパスワードの操作に失敗しました: {error}"
+        return str(error) if str(error) else "処理に失敗しました"
     
     async def download_cli(self):
         async with self.api_client as client:
