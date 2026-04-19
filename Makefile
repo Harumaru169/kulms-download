@@ -1,4 +1,7 @@
-.PHONY: clean build publish
+.PHONY: dev-install clean build publish
+
+dev-install:
+	pip install -e ".[dev]"
 
 clean:
 	rm -rf dist/ build/ *.egg-info/
