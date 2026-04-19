@@ -23,7 +23,7 @@ keywords = ["kyoto", "ku", "download", "kulms"]
 kulms-download = "kulms_download.cli.kulms_download_cli:main"
 
 [project.optional-dependencies]
-dev = ["build", "twine", "ipython"]
+dev = ["ipython"]
 
 [project.urls]
 Repository = "https://github.com/Harumaru169/kulms-download"
