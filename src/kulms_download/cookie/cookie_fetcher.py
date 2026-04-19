@@ -30,7 +30,11 @@ class CookieFetcher(AbstractCookieFetcher):
     
         # クッキーの保存、有効期限による破棄の判断などもやる
     def fetch(self) -> CookieJar:
-        saved = self.local_cookie_manager.load()
+        try:
+            saved = self.local_cookie_manager.load()
+        except Exception as e:
+            print(f"保存済みのCookieデータの読み込みにエラーが発生したので、もう一度ログインしてください")
+                
         if (saved is None) or (saved[1] < datetime.now(timezone.utc)):
             # 新鮮なクッキーを仕入れる。それをファイルに保存して、returnする。
             jar = self.remote_cookie_fetcher.fetch()

@@ -2,9 +2,11 @@ from __future__ import annotations
 from typing import cast
 from abc import ABC, abstractmethod
 import json
+import queue
 
 import multiprocessing, webview
 from ..shared.constants import Constants
+from ..shared.exceptions import AuthError, CredentialError
 from ..cookie.cookie_jar import CookieJar
 from ..cookie.credential_manager import AbstractCredentialManager
 from ..cookie.password_app_opener import AbstractPasswordAppOpener
@@ -25,15 +27,28 @@ class RemoteCookieFetcher(AbstractRemoteCookieFetcher):
         self.constants = constants
 
     def fetch(self) -> CookieJar:
-        self.password_app_opener.open()
-        
-        queue = multiprocessing.Queue()
-        p = multiprocessing.Process(target=self._on_another_process, args=[queue])
-        p.start()
-        jar = cast(CookieJar, queue.get())
-        p.terminate()
-        p.join()
-        return jar
+        try:
+            self.password_app_opener.open()
+
+            cookie_queue = multiprocessing.Queue()
+            p = multiprocessing.Process(target=self._on_another_process, args=[cookie_queue])
+            p.start()
+            try:
+                jar = cast(CookieJar, cookie_queue.get(timeout=300))
+            except queue.Empty as e:
+                raise AuthError("ログインが完了しなかったためCookieを取得できませんでした") from e
+            finally:
+                if p.is_alive():
+                    p.terminate()
+                p.join()
+
+            if not isinstance(jar, CookieJar):
+                raise AuthError("サブプロセスからのCookieデータが壊れています")
+            return jar
+        except AuthError:
+            raise
+        except Exception as e:
+            raise AuthError("Cookie取得中に認証エラーが発生しました") from e
     
     # この関数が別プロセスで実行される。引数としてはpickle可能なものだけしか許されない。queueはそれに当てはまっている。
     def _on_another_process(self, queue: multiprocessing.Queue):
@@ -56,7 +71,7 @@ class _RemoteCookieFetcherCore:
             height=800
         )
         if w is None:
-            raise Exception
+            raise AuthError("ログインウィンドウの生成に失敗しました")
         
         self.window = w
         self.window.events.loaded += self._on_load
@@ -88,7 +103,12 @@ class _RemoteCookieFetcherCore:
         self.window.evaluate_js("document.querySelector('#loginLink1')?.click();")
     
     def _fill_double_fields_and_forward(self):
-        secret = self.credential_manager.get()
+        try:
+            secret = self.credential_manager.get()
+        except CredentialError as e:
+            print(f"ECS-IDの保存済みパスワードをロードする際にエラーが起きたので、自動入力しません: {e}")
+        
+        # パスワードが設定されていない場合はメソッドを抜ける
         if secret is None:
             return
         (username, password) = secret

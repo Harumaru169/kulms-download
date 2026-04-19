@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import cast
 from abc import ABC, abstractmethod
 from ..shared.constants import *
+from ..shared.exceptions import SettingError
 import platformdirs, json
 from pathlib import Path
 
@@ -33,26 +34,32 @@ class Settings(AbstractSettings):
         if not self._settings_file_path().exists():
             return
 
-        with self._settings_file_path().open("r", encoding="utf-8") as f:
-            data = json.load(f)
-            for field_name in self._PERSISTED_FIELDS:
-                if field_name in data:
-                    # self.__dict__ を直接書き換えるか、object.__setattr__ を使う
-                    object.__setattr__(self, field_name, data[field_name])
+        try:
+            with self._settings_file_path().open("r", encoding="utf-8") as f:
+                data = json.load(f)
+                for field_name in self._PERSISTED_FIELDS:
+                    if field_name in data:
+                        # self.__dict__ を直接書き換えるか、object.__setattr__ を使う
+                        object.__setattr__(self, field_name, data[field_name])
+        except Exception as e:
+            raise SettingError("設定ファイルの読み込みに失敗しました") from e
     
     def _save(self):
         data = {field_name: getattr(self, field_name) for field_name in self._PERSISTED_FIELDS}
-        with self._settings_file_path().open("w", encoding="utf-8") as f:
-            json.dump(data, f)
+        try:
+            with self._settings_file_path().open("w", encoding="utf-8") as f:
+                json.dump(data, f)
+        except Exception as e:
+            raise SettingError("設定ファイルの保存に失敗しました") from e
     
     @property
     def password_app_path(self) -> Path|None:
         self._load()
-        try:
-            result = Path(cast(str, self._password_app_path))
-        except:
-            result = None
-        return result
+        if self._password_app_path is None:
+            return None
+        if not isinstance(self._password_app_path, str):
+            raise SettingError(f"設定値 password_app_path が不正です: {self._password_app_path}")
+        return Path(cast(str, self._password_app_path))
             
     
     @password_app_path.setter

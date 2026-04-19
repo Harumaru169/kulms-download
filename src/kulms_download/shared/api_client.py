@@ -7,6 +7,7 @@ import httpx, asyncio, json
 
 from .components import Site, Resource
 from .constants import Constants
+from .exceptions import NetworkError
 from ..cookie.cookie_fetcher import AbstractCookieFetcher
 
 class AbstractApiClient(ABC):
@@ -64,19 +65,30 @@ class ApiClient(AbstractApiClient):
         await self.close()
     
     async def fetch_site_list_without_resource(self) -> list[Site]:
-        response = await self.http_client.get(self.SITE_LIST_JSON_URL)
-        response.raise_for_status()
-        collection = response.json().get("site_collection", [])
-        return [Site.from_dict(item) for item in collection]
+        try:
+            response = await self.http_client.get(self.SITE_LIST_JSON_URL)
+            response.raise_for_status()
+            collection = response.json().get("site_collection", [])
+            return [Site.from_dict(item) for item in collection]
+        except httpx.HTTPError as e:
+            raise NetworkError("サイト一覧の取得に失敗しました") from e
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
+            raise NetworkError("サイト一覧のJSON解析に失敗しました") from e
     
     async def fetch_resource_list(self, site: Site) -> list[Resource]:
-        url = self.RESOURCE_LIST_JSON_URL_F_STR.format(site.id)
-        response = await self.http_client.get(url)
-        collection = response.json().get("content_collection", [])
-        
-        url_prefix = f"https://lms.gakusei.kyoto-u.ac.jp/access/content/group/{site.id}/"
-        container_prefix = f"/content/group/{site.id}/"
-        return [Resource.from_dict(item, site, url_prefix, container_prefix) for item in collection]
+        try:
+            url = self.RESOURCE_LIST_JSON_URL_F_STR.format(site.id)
+            response = await self.http_client.get(url)
+            response.raise_for_status()
+            collection = response.json().get("content_collection", [])
+            
+            url_prefix = f"https://lms.gakusei.kyoto-u.ac.jp/access/content/group/{site.id}/"
+            container_prefix = f"/content/group/{site.id}/"
+            return [Resource.from_dict(item, site, url_prefix, container_prefix) for item in collection]
+        except httpx.HTTPError as e:
+            raise NetworkError(f"リソース一覧の取得に失敗しました: {site.title}") from e
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
+            raise NetworkError(f"リソース一覧のJSON解析に失敗しました: {site.title}") from e
     
     def get_stream(self, url: str) -> AsyncContextManager[httpx.Response]:
         return self.http_client.stream("GET", url)

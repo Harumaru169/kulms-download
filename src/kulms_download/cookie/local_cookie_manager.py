@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 import pickle, platformdirs
 from ..shared.constants import Constants
+from ..shared.exceptions import FileSystemError
 from ..cookie.cookie_jar import CookieJar
 
 type LocalCookieData = tuple[CookieJar, datetime]
@@ -33,15 +34,24 @@ class LocalCookieManager(AbstractLocalCookieManager):
         return user_data_dir_path / "cookie_jar.pickle"
 
     def save(self, data: LocalCookieData):
-        with open(self.__cookie_file_path(), "wb") as f:
-            pickle.dump(data, f)
+        try:
+            with open(self.__cookie_file_path(), "wb") as f:
+                pickle.dump(data, f)
+        except (OSError, pickle.PickleError) as e:
+            raise FileSystemError("Cookieデータの保存に失敗しました") from e
 
     def load(self) -> LocalCookieData|None:
         path = self.__cookie_file_path()
         if not path.exists():
             return None
-        with open(path, "rb") as f:
-            return pickle.load(f)
+        try:
+            with open(path, "rb") as f:
+                return pickle.load(f)
+        except (OSError, pickle.UnpicklingError, EOFError, ValueError) as e:
+            raise FileSystemError("Cookieデータの読み込みに失敗しました") from e
 
     def remove(self):
-        self.__cookie_file_path().unlink(missing_ok=True)
+        try:
+            self.__cookie_file_path().unlink(missing_ok=True)
+        except OSError as e:
+            raise FileSystemError("Cookieデータの削除に失敗しました") from e

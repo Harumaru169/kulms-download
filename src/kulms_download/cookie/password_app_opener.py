@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 from pathlib import Path
 import platform, os, subprocess
+from ..shared.exceptions import PasswordAppError
 from ..shared.settings import AbstractSettings
 
 class AbstractPasswordAppOpener(ABC):
@@ -20,7 +21,7 @@ class PasswordAppOpener(AbstractPasswordAppOpener):
         
         path = self.settings.password_app_path
         if not path.exists():
-            raise FileNotFoundError(f"Path not found: {path}")
+            raise PasswordAppError(f"パスワードアプリが見つかりません: {self.settings.password_app_path}")
 
         current_os = platform.system()
 
