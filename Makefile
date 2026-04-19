@@ -1,13 +1,13 @@
 .PHONY: dev-install clean build publish
 
 dev-install:
-	pip install -e ".[dev]"
+	uv sync --extra dev
 
 clean:
 	rm -rf dist/ build/ *.egg-info/
 
 build: clean
-	python -m build
+	uv build
 
 publish: build
-	twine upload dist/*
+	uv publish
