@@ -8,6 +8,9 @@ class Constants:
     user_name_key: str
     password_key: str
     
+    # metadata fetch
+    metadata_fetch_page_size: int
+    
     # download
     concurrent_download: int
     download_timeout: float

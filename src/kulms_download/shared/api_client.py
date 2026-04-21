@@ -28,7 +28,7 @@ class AbstractApiClient(ABC):
         pass
     
     @abstractmethod
-    async def fetch_site_list_without_resource(self) -> list[Site]:
+    async def fetch_partial_site_list_without_resource(self, page_size: int, offset: int) -> list[Site]:
         pass
     
     @abstractmethod
@@ -41,9 +41,6 @@ class AbstractApiClient(ABC):
 
 # httpx.AsyncClientを内部に包んでいる
 class ApiClient(AbstractApiClient):
-    SITE_LIST_JSON_URL = "https://lms.gakusei.kyoto-u.ac.jp/direct/site.json"
-    RESOURCE_LIST_JSON_URL_F_STR = "https://lms.gakusei.kyoto-u.ac.jp/direct/content/site/{}.json"
-    
     def __init__(self, cookie_fetcher: AbstractCookieFetcher, constants: Constants) -> None:
         super().__init__()
         self.cookie_fetcher = cookie_fetcher
@@ -64,9 +61,16 @@ class ApiClient(AbstractApiClient):
     async def __aexit__(self, exc_type, exc, tb):
         await self.close()
     
-    async def fetch_site_list_without_resource(self) -> list[Site]:
+    # offsetは0始まり
+    def _site_list_json_url(self, page_size: int, offset: int) -> str:
+        return f"https://lms.gakusei.kyoto-u.ac.jp/direct/site.json?_limit={page_size}&_start={offset}"
+    
+    def _resource_list_json_url(self, site: Site) -> str:
+        return f"https://lms.gakusei.kyoto-u.ac.jp/direct/content/site/{site.id}.json"
+    
+    async def fetch_partial_site_list_without_resource(self, page_size: int, offset: int) -> list[Site]:
         try:
-            response = await self.http_client.get(self.SITE_LIST_JSON_URL)
+            response = await self.http_client.get(self._site_list_json_url(page_size, offset))
             response.raise_for_status()
             collection = response.json().get("site_collection", [])
             return [Site.from_dict(item) for item in collection]
@@ -77,7 +81,7 @@ class ApiClient(AbstractApiClient):
     
     async def fetch_resource_list(self, site: Site) -> list[Resource]:
         try:
-            url = self.RESOURCE_LIST_JSON_URL_F_STR.format(site.id)
+            url = self._resource_list_json_url(site)
             response = await self.http_client.get(url)
             response.raise_for_status()
             collection = response.json().get("content_collection", [])

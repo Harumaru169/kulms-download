@@ -40,6 +40,7 @@ class KulmsDownloadCli:
             service_name="kulms_download",
             user_name_key="username_key",
             password_key="password_key",
+            metadata_fetch_page_size=50,
             concurrent_download=10,
             download_timeout=60.0,
             chunk_bite_size=65536,
@@ -56,7 +57,7 @@ class KulmsDownloadCli:
         
         self.api_client = ApiClient(self.cookie_fetcher, self.constants)
         
-        self.metadata_fetcher = MetadataFetcher(self.api_client)
+        self.metadata_fetcher = MetadataFetcher(self.api_client, self.constants)
         self.resource_downloader = ResourceDownloader(self.api_client, self.constants)
         
         self.console = Console()

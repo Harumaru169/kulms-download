@@ -13,11 +13,23 @@ class AbstractMetadataFetcher(ABC):
         pass
 
 class MetadataFetcher(AbstractMetadataFetcher):
-    def __init__(self, client: AbstractApiClient) -> None:
+    def __init__(self, client: AbstractApiClient, constants: Constants) -> None:
         self.client = client
-    
+        self.constants = constants
+
     async def fetch_site_list(self) -> list[Site]:
-        site_list = await self.client.fetch_site_list_without_resource()
+        site_list: list[Site] = []
+        offset = 0
+        while True:
+            partial_site_list = await self.client.fetch_partial_site_list_without_resource(
+                page_size=self.constants.metadata_fetch_page_size,
+                offset=offset
+            )
+            site_list.extend(partial_site_list)
+            if len(partial_site_list) != self.constants.metadata_fetch_page_size:
+                break
+            offset += self.constants.metadata_fetch_page_size
+            
         
         # TODO: make this loop concurrent
         for site in site_list:
