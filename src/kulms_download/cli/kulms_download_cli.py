@@ -18,6 +18,15 @@ from ..metadatafetch.metadata_fetcher import MetadataFetcher
 from ..download.resource_downloader import ResourceDownloader
 from ..shared.exceptions import *
 
+WELCOM_ASCII_ART = """
+  _          _               \x1b[1;36m   _  \x1b[0m | KULMS Download
+ | | ___   _| |_ __ ___  ___ \x1b[1;36m  | | \x1b[0m | github.com/Harumaru169/kulms-download
+ | |/ / | | | | '_ ` _ \\/ __|\x1b[1;36m _| |_\x1b[0m | 
+ |   <| |_| | | | | | | \\__ \\\x1b[1;36m \\   /\x1b[0m | 
+ |_|\\_\\\\__,_|_|_| |_| |_|___/\x1b[1;36m _\\_/_\x1b[0m | 
+\x1b[1;36m-----------------------------------\x1b[0m | 
+"""
+
 def main():
     kulms_download_cli = KulmsDownloadCli()
     try:
@@ -64,11 +73,12 @@ class KulmsDownloadCli:
         self.console = Console()
     
     async def main(self):
+        print(WELCOM_ASCII_ART)
         choices = [
             Choice("サイトリソースのダウンロード", self.download_cli),
             Choice("設定", self.settings_cli)
         ]
-        cli_func = await questionary.select("=== KULMS Download ===", choices=choices).unsafe_ask_async()
+        cli_func = await questionary.select("コマンドを選択", choices=choices).unsafe_ask_async()
         await cli_func()
 
     def _user_message_for_error(self, error: KulmsDownloadError) -> str:
