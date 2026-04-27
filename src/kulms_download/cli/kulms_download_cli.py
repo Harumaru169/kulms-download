@@ -99,10 +99,12 @@ class KulmsDownloadCli:
                 choices=list(map(lambda s: Choice(s.title, s), site_list))
             ).unsafe_ask_async()
             
+            dest_dir_validate = lambda path_str: True if Path(path_str).is_dir() else "存在するディレクトリを指定してください"
             dest_dir = Path(
                 await questionary.path(
                 "ダウンロード先のディレクトリパスを入力:",
-                default=platformdirs.user_downloads_dir()
+                default=platformdirs.user_downloads_dir(),
+                validate=dest_dir_validate
                 ).unsafe_ask_async()
             )
             if not dest_dir.exists():
@@ -185,7 +187,7 @@ class KulmsDownloadCli:
         ).unsafe_ask_async()
         
         if num == 0:
-            validate = lambda path_str: True if Path(path_str).exists() else "指定されたパスにアプリケーションが存在しません。"
+            validate = lambda path_str: True if Path(path_str).exists() else "有効なパスを指定してください"
             path_str = await questionary.path(
                 "アプリケーションのパスを入力:",
                 default=platformdirs.site_applications_dir(),
