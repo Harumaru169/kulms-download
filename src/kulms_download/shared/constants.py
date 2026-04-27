@@ -7,6 +7,7 @@ class Constants:
     service_name: str
     user_name_key: str
     password_key: str
+    otp_key: str # one time password
     
     # metadata fetch
     metadata_fetch_page_size: int

@@ -40,6 +40,7 @@ class KulmsDownloadCli:
             service_name="kulms_download",
             user_name_key="username_key",
             password_key="password_key",
+            otp_key="otp_setting_uri_key",
             metadata_fetch_page_size=50,
             concurrent_download=10,
             download_timeout=60.0,
@@ -120,7 +121,8 @@ class KulmsDownloadCli:
         choices = [
             Choice("Cookieの削除", self.delete_cookie_cli),
             Choice("自動入力するECS-IDとパスワードの保存/削除", self.password_setting_cli),
-            Choice("認証画面でパスワード管理アプリを自動で開く", self.open_app_setting_cli)
+            Choice("認証画面でパスワード管理アプリを自動で開く", self.open_app_setting_cli),
+            Choice("ワンタイムパスワードの設定/削除", self.one_time_password_setting_cli)
         ]
         
         next_func = await questionary.select("=== 設定 ===", choices=choices).ask_async()
@@ -152,7 +154,24 @@ class KulmsDownloadCli:
             print("パスワードの設定が完了しました。")
         elif num == 1:
             self.credential_manager.delete()
-            print("パスワードを削除しました。")        
+            print("パスワードを削除しました。") 
+    
+    async def one_time_password_setting_cli(self):
+        num = await questionary.select(
+            "=== ワンタイムパスワードの設定 ===", 
+            choices=[
+                Choice("設定/更新", 0),
+                Choice("削除", 1)
+            ]
+        ).ask_async()
+        
+        if num == 0:
+            uri = await questionary.password("ワンタイムパスワードの設定URIを入力 (例: otpauth://totp/......)").ask_async()
+            self.credential_manager.set_otp_setting_uri(uri)
+            print("ワンタイムパスワードの設定が完了しました。")
+        elif num == 1:
+            self.credential_manager.delete_otp()
+            print("ワンタイムパスワードの設定を削除しました。")       
 
     async def open_app_setting_cli(self):
         print("KULMSのログインウインドウが起動した時に、設定することで同時にパスワード管理アプリを起動させることができます。ワンタイムパスワードの入力がスムーズにできて便利です。")

@@ -1,7 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-import json
+import json, pyotp
+from datetime import datetime
 
 from ..shared.constants import Constants
 from ..shared.exceptions import CredentialError
@@ -18,6 +19,18 @@ class AbstractCredentialManager(ABC):
     
     @abstractmethod
     def delete(self):
+        pass
+    
+    @abstractmethod
+    def set_otp_setting_uri(self, uri):
+        pass
+    
+    @abstractmethod
+    def get_otp(self, target_dt: datetime) -> str | None:
+        pass
+    
+    @abstractmethod
+    def delete_otp(self):
         pass
 
 class CredentialManager(AbstractCredentialManager):
@@ -50,3 +63,27 @@ class CredentialManager(AbstractCredentialManager):
             keyring.delete_password(self.constants.service_name, self.constants.password_key)
         except keyring.errors.KeyringError as e:
             raise CredentialError("ECS-IDのパスワードが削除できませんでした")
+    
+    def set_otp_setting_uri(self, uri):
+        try:
+            keyring.set_password(self.constants.service_name, self.constants.otp_key, uri)
+        except keyring.errors.KeyringError as e:
+            raise CredentialError("OTP設定URIがセットできませんでした")
+    
+    def get_otp(self, target_dt: datetime) -> str | None:
+        try:
+            uri = keyring.get_password(self.constants.service_name, self.constants.otp_key)
+        except keyring.errors.KeyringError as e:
+            raise CredentialError("OTP設定URIが取得できませんでした")
+        if uri is None:
+            print("🚨 OTP setting URI is not set!!")
+            return None
+        totp = pyotp.parse_uri(uri)
+        otp_code = totp.at(target_dt)
+        return otp_code
+    
+    def delete_otp(self):
+        try:
+            keyring.delete_password(self.constants.service_name, self.constants.otp_key)
+        except keyring.errors.KeyringError as e:
+            raise CredentialError("OTP設定URIが削除できませんでした")

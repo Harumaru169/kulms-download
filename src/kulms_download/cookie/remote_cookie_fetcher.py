@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import cast
 from abc import ABC, abstractmethod
-import json
+import json, time
 import queue
+from datetime import datetime
 
 import multiprocessing, webview
 from ..shared.constants import Constants
@@ -107,6 +108,7 @@ class _RemoteCookieFetcherCore:
             secret = self.credential_manager.get()
         except CredentialError as e:
             print(f"ECS-IDの保存済みパスワードをロードする際にエラーが起きたので、自動入力しません: {e}")
+            return
         
         # パスワードが設定されていない場合はメソッドを抜ける
         if secret is None:
@@ -121,4 +123,19 @@ class _RemoteCookieFetcherCore:
             % json.dumps(password)
         )
         self.window.evaluate_js("document.querySelector('#login_button')?.click();")
-        return
+        time.sleep(0.5)
+        
+        self.window.evaluate_js("document.querySelector('#authentication_button')?.click();")
+        time.sleep(0.5)
+        self.window.evaluate_js("document.querySelector('#choice_button')?.click();")
+        time.sleep(0.5)
+        
+        otp = self.credential_manager.get_otp(datetime.now())
+        if otp is not None:
+            self.window.evaluate_js(
+                "const el = document.querySelector('#password_input.onetime_input'); if (el) { el.value = %s; }"
+                % json.dumps(otp)
+            )
+            time.sleep(0.5)
+            self.window.evaluate_js("document.querySelector('#login_button')?.click();")
+            time.sleep(0.5)
