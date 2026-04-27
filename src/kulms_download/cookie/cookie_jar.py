@@ -1,32 +1,34 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Self, cast
-from datetime import datetime, timezone
 
-from http.cookies import SimpleCookie, Morsel
 import email.utils
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from http.cookies import Morsel, SimpleCookie
+from typing import Self
+
 import httpx
+
 
 @dataclass
 class CookieJar:
     pieces: list[_CookiePiece]
-    
+
     @classmethod
     def from_sc_list(cls, sc_list: list[SimpleCookie]) -> Self:
         pieces = []
         for sc in sc_list:
             pieces.extend(_CookiePiece.from_sc(sc))
         return cls(pieces)
-    
+
     def to_httpx_cookies(self):
         jar = httpx.Cookies()
         for piece in self.pieces:
             jar.set(piece.key, piece.value, domain=piece.domain, path=piece.path)
         return jar
-    
-    def compute_exp_date(self) -> datetime|None:
-        result: datetime|None = None
-    
+
+    def compute_exp_date(self) -> datetime | None:
+        result: datetime | None = None
+
         for piece in self.pieces:
             if piece.exp_date is not None:
                 if result is None or piece.exp_date < result:
@@ -40,8 +42,8 @@ class _CookiePiece:
     value: str
     domain: str
     path: str
-    exp_date: datetime|None # expiration datetime
-    
+    exp_date: datetime | None  # expiration datetime
+
     @classmethod
     def from_sc(cls, sc: SimpleCookie) -> list[_CookiePiece]:
         if not sc:
@@ -52,10 +54,11 @@ class _CookiePiece:
                 value=morsel.value,
                 domain=morsel["domain"],
                 path=morsel["path"],
-                exp_date=cls._extract_expiration_date(morsel)
-            ) for name, morsel in sc.items()
+                exp_date=cls._extract_expiration_date(morsel),
+            )
+            for name, morsel in sc.items()
         ]
-    
+
     # プラットフォームごとにmorselの値の型が変わるのでその差を吸収
     @classmethod
     def _extract_expiration_date(cls, morsel: Morsel) -> datetime | None:
@@ -69,7 +72,7 @@ class _CookiePiece:
         # クラス名ではなくメソッドの有無で判定（ダックタイピング）
         if hasattr(expires_val, "timeIntervalSince1970"):
             timestamp = expires_val.timeIntervalSince1970()
-            return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+            return datetime.fromtimestamp(timestamp, tz=UTC)
 
         # 2. 一般的な Linux / Windows の環境 (str) の場合
         if isinstance(expires_val, str):

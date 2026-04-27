@@ -1,5 +1,5 @@
-from pathlib import Path
-from kulms_download.shared.components import *
+from kulms_download.shared.components import Resource
+
 
 def show_tree_structure(root: Resource):
     if root is None:
