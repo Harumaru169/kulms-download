@@ -187,7 +187,7 @@ class KulmsDownloadCli:
         ).unsafe_ask_async()
         
         if num == 0:
-            validate = lambda path_str: True if Path(path_str).exists() else "有効なパスを指定してください"
+            validate = lambda path_str: True if Path(path_str).exists() else "指定されたパスにアプリケーションが存在しません。"
             path_str = await questionary.path(
                 "アプリケーションのパスを入力:",
                 default=platformdirs.site_applications_dir(),
