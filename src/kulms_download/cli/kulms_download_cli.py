@@ -68,7 +68,7 @@ class KulmsDownloadCli:
             Choice("サイトリソースのダウンロード", self.download_cli),
             Choice("設定", self.settings_cli)
         ]
-        cli_func = await questionary.select("=== KULMS Download ===", choices=choices).ask_async()
+        cli_func = await questionary.select("=== KULMS Download ===", choices=choices).unsafe_ask_async()
         await cli_func()
 
     def _user_message_for_error(self, error: KulmsDownloadError) -> str:
@@ -97,18 +97,18 @@ class KulmsDownloadCli:
             selected_site_list = await questionary.checkbox(
                 "資料をダウンロードしたいサイトをすべて選択:",
                 choices=list(map(lambda s: Choice(s.title, s), site_list))
-            ).ask_async()
+            ).unsafe_ask_async()
             
             dest_dir = Path(
                 await questionary.path(
                 "ダウンロード先のディレクトリパスを入力:",
                 default=platformdirs.user_downloads_dir()
-                ).ask_async()
+                ).unsafe_ask_async()
             )
             if not dest_dir.exists():
                 raise Exception
             
-            confirmation = await questionary.confirm("ダウンロードを開始しますか？").ask_async()
+            confirmation = await questionary.confirm("ダウンロードを開始しますか？").unsafe_ask_async()
             if not confirmation:
                 print("中止します。")
                 return
@@ -125,12 +125,12 @@ class KulmsDownloadCli:
             Choice("ワンタイムパスワードの設定/削除", self.one_time_password_setting_cli)
         ]
         
-        next_func = await questionary.select("=== 設定 ===", choices=choices).ask_async()
+        next_func = await questionary.select("=== 設定 ===", choices=choices).unsafe_ask_async()
         await next_func()
 
     async def delete_cookie_cli(self):
         print("Cookieデータはログイン後、1時間程度保持されています。削除すると、次回使用時にログインウインドウが立ち上がります。")
-        confirmation = await questionary.confirm("Cookieデータを削除しますか？").ask_async()
+        confirmation = await questionary.confirm("Cookieデータを削除しますか？").unsafe_ask_async()
         if not confirmation:
             print("中止しました。")
             return
@@ -145,11 +145,11 @@ class KulmsDownloadCli:
                 Choice("更新,追加", 0),
                 Choice("削除", 1)
             ]
-        ).ask_async()
+        ).unsafe_ask_async()
         
         if num == 0:
-            username = await questionary.password("ESC-IDのユーザー名を入力:").ask_async()
-            password = await questionary.password("ESC-IDのパスワードを入力:").ask_async()
+            username = await questionary.password("ESC-IDのユーザー名を入力:").unsafe_ask_async()
+            password = await questionary.password("ESC-IDのパスワードを入力:").unsafe_ask_async()
             self.credential_manager.set(username, password)
             print("パスワードの設定が完了しました。")
         elif num == 1:
@@ -163,10 +163,10 @@ class KulmsDownloadCli:
                 Choice("設定/更新", 0),
                 Choice("削除", 1)
             ]
-        ).ask_async()
+        ).unsafe_ask_async()
         
         if num == 0:
-            uri = await questionary.password("ワンタイムパスワードの設定URIを入力 (例: otpauth://totp/......)").ask_async()
+            uri = await questionary.password("ワンタイムパスワードの設定URIを入力 (例: otpauth://totp/......)").unsafe_ask_async()
             self.credential_manager.set_otp_setting_uri(uri)
             print("ワンタイムパスワードの設定が完了しました。")
         elif num == 1:
@@ -182,7 +182,7 @@ class KulmsDownloadCli:
                 Choice("パスワード管理アプリの登録", 0),
                 Choice("パスワード管理アプリを起動しないようにする", 1)
             ]
-        ).ask_async()
+        ).unsafe_ask_async()
         
         if num == 0:
             validate = lambda path_str: True if Path(path_str).exists() else "指定されたパスにアプリケーションが存在しません。"
@@ -190,7 +190,7 @@ class KulmsDownloadCli:
                 "アプリケーションのパスを入力:",
                 default=platformdirs.site_applications_dir(),
                 validate=validate
-            ).ask_async()
+            ).unsafe_ask_async()
             self.settings.password_app_path = Path(path_str)
             print("アプリケーションの設定が完了しました。")
         elif num == 1:
