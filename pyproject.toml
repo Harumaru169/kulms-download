@@ -16,6 +16,7 @@ dependencies = [
     "pywebview",
     "questionary",
     "rich",
+    "prompt_toolkit >=2.0,<4.0",
     "pyotp"
 ]
 keywords = ["kyoto", "ku", "download", "kulms"]
@@ -33,3 +34,10 @@ Repository = "https://github.com/Harumaru169/kulms-download"
 where = ["src"]
 
 [tool.setuptools_scm]
+
+[tool.ruff]
+lint.select = ["E", "F", "I", "UP", "B"]
+lint.ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
